@@ -2,6 +2,7 @@ package study.querydsl;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,6 +19,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
 import java.util.List;
 
+import static com.querydsl.core.types.dsl.Expressions.constant;
 import static com.querydsl.jpa.JPAExpressions.select;
 import static org.assertj.core.api.Assertions.assertThat;
 import static study.querydsl.entity.QMember.member;
@@ -56,7 +58,7 @@ public class QueryDslBasicTest {
 
     @Test
     @DisplayName("Start JPQL")
-    public void test1() throws Exception {
+    void test1() throws Exception {
         // find member1.
         Member findMember = em.createQuery("select m from Member m where m.username = :username", Member.class)
                 .setParameter("username", "member1")
@@ -68,7 +70,7 @@ public class QueryDslBasicTest {
 
     @Test
     @DisplayName("Start QueryDsl")
-    public void test2() throws Exception {
+    void test2() throws Exception {
         Member findMember = queryFactory.select(member)
                 .from(member)
                 .where(member.username.eq("member1"))
@@ -79,7 +81,7 @@ public class QueryDslBasicTest {
 
     @Test
     @DisplayName("Search")
-    public void test3() throws Exception {
+    void test3() throws Exception {
         Member findMember = queryFactory.selectFrom(member)
                 .where(member.username.eq("member1")
                         .and(member.age.eq(10)))
@@ -90,7 +92,7 @@ public class QueryDslBasicTest {
 
     @Test
     @DisplayName("SearchAndParam")
-    public void test4() throws Exception {
+    void test4() throws Exception {
         Member findMember = queryFactory.selectFrom(member)
                 .where(
                         member.username.eq("member1"),
@@ -102,7 +104,7 @@ public class QueryDslBasicTest {
 
     @Test
     @DisplayName("Query result")
-    public void test5() throws Exception {
+    void test5() throws Exception {
         QueryResults<Member> results = queryFactory.selectFrom(member).fetchResults();
 
         results.getTotal();
@@ -121,7 +123,7 @@ public class QueryDslBasicTest {
      */
     @Test
     @DisplayName("Sorting")
-    public void test6() throws Exception {
+    void test6() throws Exception {
         em.persist(new Member(null, 100));
         em.persist(new Member("member5", 100));
         em.persist(new Member("member6", 100));
@@ -143,7 +145,7 @@ public class QueryDslBasicTest {
 
     @Test
     @DisplayName("Paging_1")
-    public void test7() throws Exception {
+    void test7() throws Exception {
         List<Member> result = queryFactory.selectFrom(member)
                 .orderBy(member.username.desc())
                 .offset(1)
@@ -155,7 +157,7 @@ public class QueryDslBasicTest {
 
     @Test
     @DisplayName("Paging_2")
-    public void test8() throws Exception {
+    void test8() throws Exception {
         QueryResults<Member> queryResults = queryFactory.selectFrom(member)
                 .orderBy(member.username.desc())
                 .offset(1)
@@ -170,7 +172,7 @@ public class QueryDslBasicTest {
 
     @Test
     @DisplayName("Aggregation")
-    public void test9() throws Exception {
+    void test9() throws Exception {
         List<Tuple> result = queryFactory.select(
                         member.count(),
                         member.age.sum(),
@@ -195,7 +197,7 @@ public class QueryDslBasicTest {
      */
     @Test
     @DisplayName("Group")
-    public void test10() throws Exception {
+    void test10() throws Exception {
         List<Tuple> result = queryFactory.select(team.name, member.age.avg())
                 .from(member)
                 .join(member.team, team)
@@ -219,7 +221,7 @@ public class QueryDslBasicTest {
      */
     @Test
     @DisplayName("join")
-    public void test11() throws Exception {
+    void test11() throws Exception {
         List<Member> result = queryFactory.selectFrom(member)
                 .join(member.team, team)
                 .where(team.name.eq("teamA"))
@@ -294,7 +296,7 @@ public class QueryDslBasicTest {
 
     @Test
     @DisplayName("Fetch join no")
-    public void test15() throws Exception {
+    void test15() throws Exception {
         em.flush();
         em.clear();
 
@@ -308,7 +310,7 @@ public class QueryDslBasicTest {
 
     @Test
     @DisplayName("Fetch join use")
-    public void test16() throws Exception {
+    void test16() throws Exception {
         em.flush();
         em.clear();
 
@@ -329,7 +331,7 @@ public class QueryDslBasicTest {
      */
     @Test
     @DisplayName("Sub query")
-    public void test17() throws Exception {
+    void test17() throws Exception {
         QMember memberSub = new QMember("memberSub");
 
         List<Member> result = queryFactory.selectFrom(member)
@@ -347,7 +349,7 @@ public class QueryDslBasicTest {
      */
     @Test
     @DisplayName("Sub query")
-    public void test18() throws Exception {
+    void test18() throws Exception {
         QMember memberSub = new QMember("memberSub");
 
         List<Member> result = queryFactory.selectFrom(member)
@@ -363,7 +365,7 @@ public class QueryDslBasicTest {
 
     @Test
     @DisplayName("Sub query in")
-    public void test19() throws Exception {
+    void test19() throws Exception {
         QMember memberSub = new QMember("memberSub");
 
         List<Member> result = queryFactory.selectFrom(member)
@@ -379,7 +381,7 @@ public class QueryDslBasicTest {
 
     @Test
     @DisplayName("Select sub query")
-    public void test20() throws Exception {
+    void test20() throws Exception {
         QMember memberSub = new QMember("memberSub");
 
         List<Tuple> result = queryFactory.select(
@@ -387,6 +389,58 @@ public class QueryDslBasicTest {
                         select(memberSub.age.avg())
                                 .from(memberSub))
                 .from(member)
+                .fetch();
+
+        result.forEach(System.out::println);
+    }
+
+    @Test
+    @DisplayName("Basic case")
+    void test21() throws Exception {
+        List<String> result = queryFactory.select(member.age
+                        .when(10).then("열살")
+                        .when(20).then("스무살")
+                        .otherwise("기타")
+                )
+                .from(member)
+                .fetch();
+
+        result.forEach(System.out::println);
+    }
+
+    @Test
+    @DisplayName("Complex case")
+    void test22() throws Exception {
+        List<String> result = queryFactory.select(new CaseBuilder()
+                        .when(member.age.between(0, 20)).then("0~20살")
+                        .when(member.age.between(21, 30)).then("21~30살")
+                        .otherwise("기타")
+                )
+                .from(member)
+                .fetch();
+
+        result.forEach(System.out::println);
+    }
+
+    @Test
+    @DisplayName("constant")
+    void test23() throws Exception {
+        List<Tuple> result = queryFactory.select(
+                        member.username,
+                        constant("A")
+                )
+                .from(member)
+                .fetch();
+
+        result.forEach(System.out::println);
+    }
+
+    @Test
+    @DisplayName("Concat")
+    void test24() throws Exception {
+        List<String> result = queryFactory.select(member.username.concat("_").concat(member.age.stringValue()))
+                .from(member)
+                .where(member.username.eq("member1"))
                 .fetch();
 
         result.forEach(System.out::println);
