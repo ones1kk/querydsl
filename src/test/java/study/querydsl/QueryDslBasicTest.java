@@ -2,7 +2,10 @@ package study.querydsl;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -10,6 +13,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import study.querydsl.dto.MemberDto;
+import study.querydsl.dto.QMemberDto;
+import study.querydsl.dto.UserDto;
 import study.querydsl.entity.Member;
 import study.querydsl.entity.QMember;
 import study.querydsl.entity.Team;
@@ -19,6 +25,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
 import java.util.List;
 
+import static com.querydsl.core.types.Projections.*;
 import static com.querydsl.core.types.dsl.Expressions.constant;
 import static com.querydsl.jpa.JPAExpressions.select;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -441,6 +448,113 @@ public class QueryDslBasicTest {
         List<String> result = queryFactory.select(member.username.concat("_").concat(member.age.stringValue()))
                 .from(member)
                 .where(member.username.eq("member1"))
+                .fetch();
+
+        result.forEach(System.out::println);
+    }
+
+    @Test
+    @DisplayName("Simple projection")
+    void test25() throws Exception {
+        List<String> result = queryFactory.select(member.username)
+                .from(member)
+                .fetch();
+
+        result.forEach(System.out::println);
+    }
+
+    @Test
+    @DisplayName("Tuple projection")
+    void test26() throws Exception {
+        List<Tuple> result = queryFactory.select(member.username, member.age)
+                .from(member)
+                .fetch();
+
+        result.forEach(System.out::println);
+    }
+
+    @Test
+    @DisplayName("Find dto by JPQL")
+    void test27() throws Exception {
+        List<MemberDto> result = em.createQuery("select new study.querydsl.dto.MemberDto(m.username, m.age) from Member m", MemberDto.class).
+                getResultList();
+
+        result.forEach(System.out::println);
+    }
+
+    @Test
+    @DisplayName("Find dto by setter")
+    void test28() throws Exception {
+        List<MemberDto> result = queryFactory.select(Projections.bean(MemberDto.class,
+                        member.username,
+                        member.age))
+                .from(member)
+                .fetch();
+
+        result.forEach(System.out::println);
+    }
+
+    @Test
+    @DisplayName("Find dto by filed")
+    void test29() throws Exception {
+        List<MemberDto> result = queryFactory.select(Projections.fields(MemberDto.class,
+                        member.username,
+                        member.age))
+                .from(member)
+                .fetch();
+
+        result.forEach(System.out::println);
+    }
+
+    @Test
+    @DisplayName("Find dto by construct")
+    void test30() throws Exception {
+        List<MemberDto> result = queryFactory.select(Projections.constructor(MemberDto.class,
+                        member.username,
+                        member.age))
+                .from(member)
+                .fetch();
+
+        result.forEach(System.out::println);
+    }
+
+    @Test
+    @DisplayName("Find user dto by field")
+    void test31() throws Exception {
+        QMember memberSub = new QMember("memberSub");
+
+        List<UserDto> result = queryFactory
+                .select(fields(UserDto.class,
+                        member.username.as("name"),
+                        ExpressionUtils.as(
+                                JPAExpressions
+                                        .select(memberSub.age.max())
+                                        .from(memberSub), "age")
+                ))
+                .from(member)
+                .fetch();
+
+        result.forEach(System.out::println);
+    }
+
+    @Test
+    @DisplayName("Find user dto by construct")
+    void test32() throws Exception {
+        List<UserDto> result = queryFactory.select(constructor(UserDto.class,
+                        member.username,
+                        member.age
+                ))
+                .from(member)
+                .fetch();
+
+        result.forEach(System.out::println);
+    }
+
+    @Test
+    @DisplayName("Find dto by query projections")
+    void test35() throws Exception {
+        List<MemberDto> result = queryFactory.select(new QMemberDto(member.username, member.age))
+                .from(member)
                 .fetch();
 
         result.forEach(System.out::println);
