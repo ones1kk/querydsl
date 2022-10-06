@@ -7,6 +7,7 @@ import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +30,7 @@ import java.util.List;
 
 import static com.querydsl.core.types.Projections.constructor;
 import static com.querydsl.core.types.Projections.fields;
+import static com.querydsl.core.types.dsl.Expressions.*;
 import static com.querydsl.core.types.dsl.Expressions.constant;
 import static com.querydsl.jpa.JPAExpressions.select;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -653,5 +655,28 @@ public class QueryDslBasicTest {
         em.clear();
     }
 
+    @Test
+    @DisplayName("SQL function")
+    void test41() throws Exception {
+        List<String> result = queryFactory.select(stringTemplate("function('replace', {0}, {1}, {2})",
+                        member.username, "member",
+                        "M"))
+                .from(member)
+                .fetch();
+
+        result.forEach(System.out::println);
+    }
+
+    @Test
+    @DisplayName("SQL function2")
+    void test42() throws Exception {
+        List<String> result = queryFactory.select(member.username)
+                .from(member)
+//                .where(member.username.eq(stringTemplate("function('lower', {0})", member.username)))
+                .where(member.username.eq(member.username.lower()))
+                .fetch();
+
+        result.forEach(System.out::println);
+    }
 
 }
