@@ -1,7 +1,6 @@
 package study.querydsl.repository;
 
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.stereotype.Repository;
@@ -97,19 +96,19 @@ public class MemberJpaRepository {
 
     public List<MemberTeamDto> search(MemberSearchCondition condition) {
         return queryFactory.select(new QMemberTeamDto(
-                member.id.as("memberId"),
-                member.username,
-                member.age,
-                member.team.id.as("teamId"),
-                member.team.name.as("teamName")
-        ))
+                        member.id.as("memberId"),
+                        member.username,
+                        member.age,
+                        member.team.id.as("teamId"),
+                        member.team.name.as("teamName")
+                ))
                 .from(member)
                 .leftJoin(member.team, team)
                 .where(usernameEq(condition.getUsername()),
                         teamNameEq(condition.getTeamName()),
                         ageGoe(condition.getAgeGoe()),
                         ageLoe(condition.getAgeLoe())
-                        )
+                )
                 .fetch();
     }
 
