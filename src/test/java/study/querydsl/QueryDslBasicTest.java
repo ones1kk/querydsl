@@ -618,4 +618,40 @@ public class QueryDslBasicTest {
         return userNameEq(usernameCond).and(ageEq(ageCond));
     }
 
+    @Test
+    @DisplayName("Bulk update")
+    void test38() throws Exception {
+        long count = queryFactory.update(member)
+                .set(member.username, "비회원")
+                .where(member.age.lt(28))
+                .execute();
+
+        em.flush();
+        em.clear();
+    }
+
+    @Test
+    @DisplayName("Bulk add")
+    void test39() throws Exception {
+        long count = queryFactory.update(member)
+//                .set(member.age, member.age.add(-1))
+                .set(member.age, member.age.multiply(2))
+                .execute();
+
+        em.flush();
+        em.clear();
+    }
+
+    @Test
+    @DisplayName("Bulk delete")
+    void test40() throws Exception {
+        long count = queryFactory.delete(member)
+                .where(member.age.gt(18))
+                .execute();
+
+        em.flush();
+        em.clear();
+    }
+
+
 }
